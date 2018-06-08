@@ -64,3 +64,28 @@ get '/dinner-hash' do
     
     erb :dinnerhash
 end
+
+get '/randomgame/:name' do
+    random = ["로또당첨", "잔병치레", "새 친구","다이어트 성공", "이직"]
+    
+    @name = params[:name]
+    @random = random.sample
+    erb :randomgame
+end
+
+
+get '/randomgame2/:name' do
+ 
+    hash = {
+        "사이온" => "http://opgg-static.akamaized.net/images/lol/champion/Sion.png?image=w_140&v=1",
+        "우르곳" => "http://opgg-static.akamaized.net/images/lol/champion/Urgot.png?image=w_140&v=2",
+        "타릭" => "http://opgg-static.akamaized.net/images/lol/champion/Taric.png?image=w_140&v=1",
+        "탐켄치" => "http://opgg-static.akamaized.net/images/lol/champion/TahmKench.png?image=w_140&v=1",
+        "문도" => "http://cfile6.uf.tistory.com/image/2662C63E52A1D2B7040B51"
+    }
+    
+    @name = params[:name]
+    @random = hash.keys.sample
+    @url = hash[@random]
+    erb :randomgame2
+end
