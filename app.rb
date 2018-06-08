@@ -2,6 +2,20 @@ require 'sinatra'
 require 'sinatra/reloader'
 require 'rest-client'
 require 'json'
+require 'httparty'
+require 'nokogiri'
+require 'uri'
+require 'date'
+require 'csv'
+
+# 아래 method를 실행하기 전에 먼저 실행해라
+before do
+    p "***********************************"
+    p params
+    p request.path_info # 사용자가 요청보낸 경로
+    p request.fullpath  # 파라미터까지 포함한 경로
+    p "***********************************"
+end
 
 get '/' do
   'Hello world! welcome'
@@ -128,7 +142,6 @@ get '/lotto-sample' do
     else "꽝"
     end
     
-    
     # 몇 등 인지??
     # @matchnum = 0
     # @lotto.each do |i|
@@ -136,9 +149,53 @@ get '/lotto-sample' do
     #         @matchnum=@matchnum+1
     #     end
     # end
-    
-    
-    # drwtNo2
+
     erb :lottosample
+end
+
+
+get '/form' do
+    erb :form
+end
+
+get '/search' do
+    @keyword = params[:keyword]
+    url = "https://search.naver.com/search.naver?query="
+    # erb :search
+    redirect to(url + @keyword)
+end
+
+get '/opgg' do
+    erb :opgg
+end
+
+get '/opggresult' do
+    # http://www.op.gg/summoner/userName=hideonbush
+    url = "http://www.op.gg/summoner/userName="
+    @userName = params[:userName]
+    @encodeName = URI.encode(@userName)
+    @res = HTTParty.get(url+@encodeName)
+    
+    # Nokogiri를 통해서 정제
+    @doc = Nokogiri::HTML(@res.body)
+    # body > div.l-wrap.l-wrap--summoner > div.l-container > div > div > div.Header > div.PastRank > ul > li.Item.tip.tpd-delegation-uid-1
+    @rank7 = @doc.css("body > div.l-wrap.l-wrap--summoner > div.l-container > div > div > div.Header > div.PastRank > ul > li:nth-child(2)").text
+    @rank = @doc.css("#SummonerLayoutContent > div.tabItem.Content.SummonerLayoutContent.summonerLayout-summary > div.SideContent > div.TierBox.Box > div.SummonerRatingMedium > div.TierRankInfo > div.TierRank > span").text
+    @win = @doc.css("#SummonerLayoutContent > div.tabItem.Content.SummonerLayoutContent.summonerLayout-summary > div.SideContent > div.TierBox.Box > div.SummonerRatingMedium > div.TierRankInfo > div.TierInfo > span.WinLose > span.wins").text
+    @lose = @doc.css("#SummonerLayoutContent > div.tabItem.Content.SummonerLayoutContent.summonerLayout-summary > div.SideContent > div.TierBox.Box > div.SummonerRatingMedium > div.TierRankInfo > div.TierInfo > span.WinLose > span.losses").text
+    
+    # File.open(파일이름, 옵션) do |f|
+    # end
+    
+    # File.open('opgg.txt', 'a+') do |f|
+    #     f.write("#{@userName} : #{@win}, #{@lose}, #{@rank} , #{@rank7} \n")
+    # end
+    
+    #csv파일에 작성하기 
+    CSV.open('opgg.csv', 'a+') do |c|
+        c << [@userName, @win, @lose, @rank, @rank7]
+    end
+    
+    erb :opggresult
 end
 
