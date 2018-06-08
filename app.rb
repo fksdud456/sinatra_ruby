@@ -1,5 +1,7 @@
 require 'sinatra'
-require "sinatra/reloader"
+require 'sinatra/reloader'
+require 'rest-client'
+require 'json'
 
 get '/' do
   'Hello world! welcome'
@@ -89,3 +91,54 @@ get '/randomgame2/:name' do
     @url = hash[@random]
     erb :randomgame2
 end
+
+get '/lotto-sample' do
+    #lotto = (1..45).class
+    @lotto = (1..45).to_a.sample(6).sort
+    url = "http://www.nlotto.co.kr/common.do?method=getLottoNumber&drwNo=809"
+    @lotto_info = RestClient.get(url)
+    @lotto_hash = JSON.parse(@lotto_info)
+    
+    @winner =[]
+    @lotto_hash.each do |k,v|
+        if k.include?("drwtNo")
+            @winner << v 
+        end
+    end
+    
+    @num = (@winner & @lotto).length
+    @bonusnum = @lotto_hash["bnusNo"]
+    
+    # if문 사용해서 등수 정하기
+    if @num == 6 then @res = "1등"
+    elsif @num== 5 && @lotto.include?(@bonusnum) then @res = "2등"
+    elsif @num == 5 then @res = "3등"
+    elsif @num == 4 then @res = "4등"
+    elsif @num == 3 then @res = "5등"
+    else @res = "6등"
+    end
+    
+    # case문 사용해서 등수 정하기
+    @result = case [@num, @lotto.include?(@bonusnum)]
+    when [6, false] then "1등"
+    when [5, true] then "2등"
+    when [5, false] then "3등"
+    when [4, false] then "4등"
+    when [3, false] then "5등"
+    else "꽝"
+    end
+    
+    
+    # 몇 등 인지??
+    # @matchnum = 0
+    # @lotto.each do |i|
+    #     if winner.include?(i.to_s)
+    #         @matchnum=@matchnum+1
+    #     end
+    # end
+    
+    
+    # drwtNo2
+    erb :lottosample
+end
+
